@@ -307,6 +307,15 @@ function buildMounts(
     mounts.push(...providerContribution.mounts);
   }
 
+  // Mount host mail spool so the main agent can read system mail (logwatch, etc.)
+  if (agentGroup.folder === 'main' && fs.existsSync('/var/mail')) {
+    mounts.push({
+      hostPath: '/var/mail',
+      containerPath: '/var/mail',
+      readonly: true,
+    });
+  }
+
   return mounts;
 }
 
