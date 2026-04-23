@@ -275,6 +275,17 @@ function buildMounts(
   // skill symlinks)
   mounts.push({ hostPath: claudeDir, containerPath: '/home/node/.claude', readonly: false });
 
+  // Gmail credentials directory (for Gmail MCP inside the container).
+  // Only mounted when credentials are present — the MCP server needs RW
+  // access to refresh OAuth tokens.
+  const gmailDir = path.join(
+    process.env.HOME || `/home/${process.env.USER || 'node'}`,
+    '.gmail-mcp',
+  );
+  if (fs.existsSync(gmailDir)) {
+    mounts.push({ hostPath: gmailDir, containerPath: '/home/node/.gmail-mcp', readonly: false });
+  }
+
   // Shared agent-runner source — read-only, same code for all groups.
   const agentRunnerSrc = path.join(projectRoot, 'container', 'agent-runner', 'src');
   mounts.push({ hostPath: agentRunnerSrc, containerPath: '/app/src', readonly: true });
