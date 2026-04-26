@@ -24,6 +24,8 @@ jobs:
   sync-and-merge:
     if: github.repository != 'qwibitai/nanoclaw'
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
 #      - uses: actions/create-github-app-token@v1
 #        id: app-token
@@ -42,7 +44,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Configure git
         run: |
