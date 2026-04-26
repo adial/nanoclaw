@@ -71,8 +71,12 @@ jobs:
             exit 0
           fi
 
-          # Validate build
-          pnpm install --frozen-lockfile
+          # Validate build — lockfile may be stale after merge, so regenerate + commit
+          pnpm install --no-frozen-lockfile
+          if ! git diff --quiet pnpm-lock.yaml; then
+            git add pnpm-lock.yaml
+            git commit -m "chore: regenerate pnpm-lock.yaml after upstream merge"
+          fi
           if ! pnpm run build; then
             echo "::error::Build failed after merging upstream/main"
             git reset --hard "origin/main"
