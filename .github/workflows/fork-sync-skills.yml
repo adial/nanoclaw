@@ -99,6 +99,10 @@ jobs:
       - name: Merge main into skill branches
         id: merge
         run: |
+          # Clean working tree left dirty by pnpm install / build in sync step
+          git checkout -- .
+          git clean -fd
+
           # Re-fetch to pick up any changes pushed since job start
           git fetch origin
 
