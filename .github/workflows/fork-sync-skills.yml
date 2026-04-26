@@ -36,10 +36,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
       - name: Configure git
         run: |
@@ -70,8 +72,8 @@ jobs:
           fi
 
           # Validate build
-          npm ci
-          if ! npm run build; then
+          pnpm install --frozen-lockfile
+          if ! pnpm run build; then
             echo "::error::Build failed after merging upstream/main"
             git reset --hard "origin/main"
             echo "synced=false" >> "$GITHUB_OUTPUT"
@@ -79,7 +81,7 @@ jobs:
             exit 0
           fi
 
-          if ! npm test 2>/dev/null; then
+          if ! pnpm test 2>/dev/null; then
             echo "::error::Tests failed after merging upstream/main"
             git reset --hard "origin/main"
             echo "synced=false" >> "$GITHUB_OUTPUT"
@@ -129,31 +131,25 @@ jobs:
             fi
 
             # After merge, lockfile may be out of sync — regenerate and commit it
-            if ! npm install --package-lock-only 2>/dev/null; then
-              echo "::warning::npm install failed for $BRANCH"
+            if ! pnpm install --no-frozen-lockfile 2>/dev/null; then
+              echo "::warning::pnpm install failed for $BRANCH"
               git reset --hard "origin/$BRANCH"
               FAILED="$FAILED $SKILL_NAME"
               continue
             fi
-            if ! git diff --quiet package-lock.json; then
-              git add package-lock.json
-              git commit -m "chore: regenerate package-lock.json after main merge"
-            fi
-            if ! npm ci; then
-              echo "::warning::npm ci failed for $BRANCH"
-              git reset --hard "origin/$BRANCH"
-              FAILED="$FAILED $SKILL_NAME"
-              continue
+            if ! git diff --quiet pnpm-lock.yaml; then
+              git add pnpm-lock.yaml
+              git commit -m "chore: regenerate pnpm-lock.yaml after main merge"
             fi
 
-            if ! npm run build; then
+            if ! pnpm run build; then
               echo "::warning::Build failed for $BRANCH"
               git reset --hard "origin/$BRANCH"
               FAILED="$FAILED $SKILL_NAME"
               continue
             fi
 
-            if ! npm test 2>/dev/null; then
+            if ! pnpm test 2>/dev/null; then
               echo "::warning::Tests failed for $BRANCH"
               git reset --hard "origin/$BRANCH"
               FAILED="$FAILED $SKILL_NAME"
@@ -192,7 +188,7 @@ jobs:
                 'git fetch upstream main',
                 'git merge upstream/main',
                 '# resolve conflicts',
-                'npm run build && npm test',
+                'pnpm run build && pnpm test',
                 'git push',
                 '```',
               ].join('\n'),
